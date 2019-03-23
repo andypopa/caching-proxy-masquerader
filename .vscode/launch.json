@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Caching Proxy",
+            "program": "${workspaceFolder}/index.js",
+            "args": ["caching-proxy"],
+            "outputCapture": "std"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Masquerader",
+            "program": "${workspaceFolder}/index.js",
+            "args": ["masquerader"],
+            "outputCapture": "std"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Cache Cleaner",
+            "program": "${workspaceFolder}/cache-cleaner.js",
+            "outputCapture": "std"
+        }
+    ]
+}
