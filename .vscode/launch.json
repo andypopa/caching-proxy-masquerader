@@ -23,6 +23,14 @@
             "name": "Cache Cleaner",
             "program": "${workspaceFolder}/cache-cleaner.js",
             "outputCapture": "std"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Example",
+            "program": "${workspaceFolder}/example.js",
+            "outputCapture": "std",
+            "args": ["masquerader"]
         }
     ]
 }

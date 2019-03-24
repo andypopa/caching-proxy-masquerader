@@ -7,20 +7,35 @@ const paramsService = require('./params.service');
 
 let masqueradingTable = {};
 
-const getTimestamp = (cachingProxy, masquerader) => {
-    if (typeof cachingProxy === 'undefined' ||
-        typeof masquerader === 'undefined') {
-            throw `'cachingProxy' and 'masquerader' must be set before calling getTimestamp(). Call getMode() and store the result in global variables before calling this function.`;
+const getCachePath = (isCachingProxy, isMasquerader) => {
+    const timestamp = getTimestamp(isCachingProxy, isMasquerader);
+
+    let cachePath = '';
+
+    if (isCachingProxy) {
+        cachePath = path.join(getCachesFolderPath(), timestamp);
+        fs.mkdirSync(cachePath);
+    } else {
+        cachePath = getLatestCacheFolder();
+    }
+
+    return cachePath;
+}
+
+const getTimestamp = (isCachingProxy, isMasquerader) => {
+    if (typeof isCachingProxy === 'undefined' ||
+        typeof isMasquerader === 'undefined') {
+            throw `'isCachingProxy' and 'isMasquerader' must be passed to getTimestamp(isCachingProxy, isMasquerader). Call getModeFromArgs() to get them from the command-line, or pass them in yourself.`;
         }
 
     let timestamp = Date.now().toString();
     const maybeTimestampArg = process.argv[3];
 
-    if (masquerader && typeof process.argv[3] === 'undefined') {
+    if (isMasquerader && typeof process.argv[3] === 'undefined') {
         timestamp = getLatestCache();
     }
 
-    if (masquerader && typeof maybeTimestampArg !== 'undefined') {
+    if (isMasquerader && typeof maybeTimestampArg !== 'undefined') {
         if (moment.isValid(+maybeTimestampArg)) {
             timestamp = getLatestCache();
         } else {
@@ -74,8 +89,8 @@ const maybeMakeSubfolder = (parentFolderPath, subfolderName) => {
     return subfolderPath;
 }
 
-const resolveRequestFolder = (cachePath, req, bodyContent, cachingProxy) => {
-    const folderResolver = cachingProxy ? maybeMakeSubfolder : path.join;
+const resolveRequestFolder = (cachePath, req, bodyContent, isCachingProxy) => {
+    const folderResolver = isCachingProxy ? maybeMakeSubfolder : path.join;
     let API = req.url.split('?')[0].split('/')[1];
     const params = paramsService.getParams(bodyContent, req);
     const paramsObj = paramsService.getParamsObj(params);
@@ -84,7 +99,7 @@ const resolveRequestFolder = (cachePath, req, bodyContent, cachingProxy) => {
 
     const nextTokenParam = paramsService.getParam(params, 'NextToken');
     
-    if (typeof nextTokenParam !== 'undefined' && cachingProxy) {
+    if (typeof nextTokenParam !== 'undefined' && isCachingProxy) {
         const nextToken = nextTokenParam.value;
         let nextTokenRegistryObj = {};
         nextTokenRegistryObj[nextToken] = nextTokenService.getHashedNextToken(nextToken);
@@ -112,8 +127,8 @@ const resolveRequestFolder = (cachePath, req, bodyContent, cachingProxy) => {
     return requestFolder;
 }
 
-const cache = (cachePath, data, req, bodyContent, cachingProxy) => {
-    let requestFolder = resolveRequestFolder(cachePath, req, bodyContent, cachingProxy);
+const cache = (cachePath, data, req, bodyContent, isCachingProxy) => {
+    let requestFolder = resolveRequestFolder(cachePath, req, bodyContent, isCachingProxy);
 
     const savedResponsesNo = fs.readdirSync(requestFolder)
                                 .filter((a) => a[0] !== '.')
@@ -133,8 +148,8 @@ const cache = (cachePath, data, req, bodyContent, cachingProxy) => {
     return responsePath;
 }
 
-const getCachedRequest = (cachePath, req, bodyContent, cachingProxy) => {
-    let requestFolder = resolveRequestFolder(cachePath, req, bodyContent, cachingProxy);
+const getCachedResponse = (cachePath, req, bodyContent, isCachingProxy) => {
+    let requestFolder = resolveRequestFolder(cachePath, req, bodyContent, isCachingProxy);
     
     const savedResponsesNo = fs.readdirSync(requestFolder)
                                 .filter((a) => a[0] !== '.')
@@ -161,11 +176,12 @@ const getCachedRequest = (cachePath, req, bodyContent, cachingProxy) => {
 }
 
 module.exports = {
+    getCachePath: getCachePath,
     getTimestamp: getTimestamp,
     getCachesFolderPath: getCachesFolderPath,
     getCaches: getCaches,
     getLatestCache: getLatestCache,
     getLatestCacheFolder: getLatestCacheFolder,
-    getCachedRequest: getCachedRequest,
+    getCachedResponse: getCachedResponse,
     cache: cache
 }

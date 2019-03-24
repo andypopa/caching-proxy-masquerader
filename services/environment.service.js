@@ -1,13 +1,17 @@
-const getMode = () => {
-    const cachingProxy = process.argv[2] === 'caching-proxy';
-    const masquerader = process.argv[2] === 'masquerader';
+const getModesFromArgs = () => {
+    if (process.argv.length < 3) {
+         throw `getModesFromArgs(): You must provide the arguments 'caching-proxy' or 'masquerader' to the command-line.`;
+    }
+
+    const isCachingProxy = process.argv.indexOf('caching-proxy') !== -1;
+    const isMasquerader = process.argv.indexOf('masquerader') !== -1;
 
     return {
-        cachingProxy: cachingProxy,
-        masquerader: masquerader
+        isCachingProxy: isCachingProxy,
+        isMasquerader: isMasquerader
     }
 }
 
 module.exports = {
-    getMode: getMode
+    getModesFromArgs: getModesFromArgs
 }
