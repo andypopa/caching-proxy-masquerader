@@ -127,8 +127,8 @@ const resolveRequestFolder = (cachePath, req, bodyContent, isCachingProxy) => {
     return requestFolder;
 }
 
-const cache = (cachePath, data, req, bodyContent, isCachingProxy) => {
-    let requestFolder = resolveRequestFolder(cachePath, req, bodyContent, isCachingProxy);
+const cache = (cachePath, data, req, bodyContent) => {
+    let requestFolder = resolveRequestFolder(cachePath, req, bodyContent, true);
 
     const savedResponsesNo = fs.readdirSync(requestFolder)
                                 .filter((a) => a[0] !== '.')
