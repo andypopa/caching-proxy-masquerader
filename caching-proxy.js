@@ -8,8 +8,9 @@ const defaultGetUserResDecorator = (cachePath) => (proxyRes, data, req, userRes,
 
 const defaultProxyRoute = '/';
 const defaultProxyHost = '127.0.0.1';
+const defaultProxyHostPort = 80;
 const defaultExpressHttpProxyOptions = {
-    https: true
+    https: false
 }
 
 const onListen = (port) => {
@@ -19,6 +20,7 @@ const onListen = (port) => {
 
 const configureExpressApp = (app, cachePath, cachingProxyOptions) => {
     let proxyHost = cachingProxyOptions.proxyHost || defaultProxyHost;
+    let proxyHostPort = cachingProxyOptions.proxyHostPort || defaultProxyHostPort;
     let proxyRoute = cachingProxyOptions.proxyRoute || defaultProxyRoute;
     let expressHttpProxyOptions = cachingProxyOptions.expressHttpProxyOptions || defaultExpressHttpProxyOptions;
     let getUserResDecorator = cachingProxyOptions.getUserResDecorator || defaultGetUserResDecorator;
@@ -30,7 +32,7 @@ const configureExpressApp = (app, cachePath, cachingProxyOptions) => {
         userResDecorator: getUserResDecorator(cachePath)
     });
 
-    app.use(proxyRoute, proxy(proxyHost, appOptions));
+    app.use(proxyRoute, proxy(`${proxyHost}:${proxyHostPort}`, appOptions));
 }
 
 module.exports = {
