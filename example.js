@@ -44,6 +44,12 @@ const responseDirResolver = (cachePath, req, bodyContent, dirNameBuilder) => {
     return requestDir;
 }
 
+const encodeRequest = (relevantParams) => {
+    return relevantParams
+            .map((param) => `${param.name}=${param.value}`)
+            .join('&');
+}
+
 // eslint-disable-next-line no-unused-vars
 const cachingProxyMasquerader = new CachingProxyMasquerader({
     port: port,

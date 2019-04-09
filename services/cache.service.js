@@ -5,44 +5,6 @@ const _ = require('lodash');
 
 const loggerService = require('./logger.service');
 
-let masqueradingDataSource;
-let masqueraderResponseFileResolver = (responseDir, masqueradingDataSource) => {
-    const savedResponsesNo = fs.readdirSync(responseDir)
-        .filter((a) => a[0] !== '.')
-        .length;
-
-    if (typeof masqueradingDataSource[responseDir] === 'undefined') {
-        masqueradingDataSource[responseDir] = 1;
-    } else {
-        masqueradingDataSource[responseDir] = masqueradingDataSource[responseDir] < savedResponsesNo ?
-        masqueradingDataSource[responseDir] + 1 :
-            1;
-    }
-    const responseFilename = masqueradingDataSource[responseDir].toString();
-    return responseFilename;
-}
-
-let masqueraderResponseFileLogger = (responseDir, masqueradingDataSource) => {
-    const savedResponsesNo = fs.readdirSync(responseDir)
-        .filter((a) => a[0] !== '.')
-        .length;
-
-    return `${masqueradingDataSource[responseDir] + '/' + savedResponsesNo}`
-}
-
-const maybeMakeSubdir = (parentDirPath, subdirName) => {
-    const subdirPath = path.join(parentDirPath, subdirName);
-    if (!fs.existsSync(subdirPath)) {
-        fs.mkdirSync(subdirPath);
-    }
-    return subdirPath;
-}
-
-const dirNameBuilders = {
-    cachingProxy: maybeMakeSubdir,
-    masquerader: path.join
-}
-
 const getCachePath = (isCachingProxy, isMasquerader) => {
     const timestamp = getTimestamp(isCachingProxy, isMasquerader);
 
@@ -82,13 +44,13 @@ const getTimestamp = (isCachingProxy, isMasquerader) => {
     return timestamp;
 }
 
-const getCachesDirPath = () => {
-    return path.join(process.cwd(), '/data');
-}
-
+//should be in Cache service
 const getCaches = () => {
     try {
-        const dataFolder = getCachesDirPath();
+        const dataFolder = cachingProxyMasquerader.cachesDirPath;
+
+        // this 'filters files'
+        // we need it to 'just include diretories'
         const caches = fs.readdirSync(dataFolder).filter((a) => a.indexOf('.') === -1);
         return caches;
     } catch (err) {
@@ -96,6 +58,7 @@ const getCaches = () => {
     }
 }
 
+//should be in Cache service
 const getLatestCache = () => {
     const caches = getCaches();
 
@@ -107,54 +70,7 @@ const getLatestCache = () => {
     return latestCache;
 }
 
+//should be in Cache service
 const getLatestCacheDir = () => {
-    return path.join(getCachesDirPath(), getLatestCache());
-}
-
-const encodeRequest = (relevantParams) => {
-    return relevantParams
-            .map((param) => `${param.name}=${param.value}`)
-            .join('&');
-}
-
-const defaultResponseFileResolver = (requestFolder) => {
-    const savedResponsesNo = fs.readdirSync(requestFolder)
-    .filter((a) => a[0] !== '.')
-    .length;
-
-    const responseNo = savedResponsesNo + 1;
-    const responseFilename = responseNo.toString();
-    return responseFilename;
-}
-
-const cache = (responseDirResolver, responseFileResolver, cachePath, data, req, bodyContent) => {
-    const responseDir = responseDirResolver(cachePath, req, bodyContent, dirNameBuilders.cachingProxy);
-    const responseFilename = responseFileResolver(responseDir);
-    const responsePath = path.join(responseDir, responseFilename);
-
-    loggerService.logCaching(req, responseFilename, responsePath);
-
-    fs.writeFileSync(responsePath, data);
-    return responsePath;
-}
-
-const getCachedResponse = (responseDirResolver, masqueraderResponseFileResolver, cachePath, req, bodyContent) => {
-    const responseDir = responseDirResolver(cachePath, req, bodyContent, dirNameBuilders.masquerader);
-    const responseFilename = masqueraderResponseFileResolver(responseDir, masqueradingDataSource);    
-    const responsePath = path.join(responseDir, responseFilename);
-
-    loggerService.logMasquerading(masqueraderResponseFileLogger(responseDir, masqueradingDataSource));
-
-    return fs.readFileSync(responsePath, 'utf8');
-}
-
-module.exports = {
-    getCachePath: getCachePath,
-    getTimestamp: getTimestamp,
-    getCachesFolderPath: getCachesDirPath,
-    getCaches: getCaches,
-    getLatestCache: getLatestCache,
-    getLatestCacheFolder: getLatestCacheDir,
-    getCachedResponse: getCachedResponse,
-    cache: cache
+    return path.join(cachingProxyMasquerader.cachesDirPath, getLatestCache());
 }

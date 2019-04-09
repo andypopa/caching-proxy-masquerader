@@ -20,6 +20,8 @@ class CachingProxyMasquerader {
         this.maybeInitModule(cachingProxy, isCachingProxy, cachingProxyOptions);
         this.maybeInitModule(masquerader, isMasquerader, masqueraderOptions);
 
+        this.cachesDirPath = process.cwd(), '/data';
+
         this.runApp();
     }
 
@@ -31,8 +33,8 @@ class CachingProxyMasquerader {
         if (!shouldInit) {
             return;
         }
-
-        _module.configureExpressApp(this.app, this.cachePath, moduleOptions);
+        const __module = new _module();
+        __module.constructor(this.app, this.cachePath, moduleOptions);
         this.runningModules.push(_module);
     }
 
