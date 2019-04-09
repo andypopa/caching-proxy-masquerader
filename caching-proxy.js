@@ -2,54 +2,27 @@ const fs = require('fs');
 const path = require('path');
 
 const proxy = require('express-http-proxy');
-const loggingService = require('./services/logging.service')
-const cacheService = require('./services/cache.service');
+const loggingService = require('./services/logging.service');
 
-const defaultProxyRoute = '/';
-const defaultProxyHost = '127.0.0.1';
-const defaultProxyHostPort = 80;
-const defaultExpressHttpProxyOptions = {
-    https: false
-}
-
-const defaultOnListen = (port) => {
-    // eslint-disable-next-line no-console
-    console.log(`Caching proxy listening on port ${port}`);
-}
-
-const defaultGetUserResDecorator = (cachePath) => (proxyRes, data, req, userRes, bodyContent) => {
-    cacheService.cache(cachePath, data, req, bodyContent);
-    return data;
-}
-
-const defaultResponseFileResolver = (requestFolder) => {
-    const savedResponsesNo = fs.readdirSync(requestFolder)
-    .filter((a) => a[0] !== '.')
-    .length;
-
-    const responseNo = savedResponsesNo + 1;
-    const responseFilename = responseNo.toString();
-    return responseFilename;
-}
+const defaults = require('./defaults');
 
 class CachingProxy {
-    constructor(app, cachePath, cachingProxyOptions, responseDirResolver, responseFileResolver) {
-        this.app = app;
+    constructor(cachingProxyOptions, app, cachePath) {
+        this.proxyHost = cachingProxyOptions.proxyHost || defaults.cachingProxy.ProxyHost;
+        this.proxyHostPort = cachingProxyOptions.proxyHostPort || defaults.cachingProxy.proxyHostPort;
+        this.proxyRoute = cachingProxyOptions.proxyRoute || defaults.cachingProxy.proxyRoute;
+        this.expressHttpProxyOptions = cachingProxyOptions.expressHttpProxyOptions || defaults.cachingProxy.expressHttpProxyOptions;
+        this.getUserResDecorator = cachingProxyOptions.getUserResDecorator || defaults.cachingProxy.getUserResDecorator;
 
-        this.cachePath = cachePath;
+        this.responseDirResolver = cachingProxyOptions.responseDirResolver || defaults.cachingProxy.responseDirResolver;
+        this.responseFileResolver = cachingProxyOptions.responseFileResolver || defaults.cachingProxy.responseFileResolver;
 
-        this.proxyHost = cachingProxyOptions.proxyHost || defaultProxyHost;
-        this.proxyHostPort = cachingProxyOptions.proxyHostPort || defaultProxyHostPort;
-        this.proxyRoute = cachingProxyOptions.proxyRoute || defaultProxyRoute;
-        this.expressHttpProxyOptions = cachingProxyOptions.expressHttpProxyOptions || defaultExpressHttpProxyOptions;
-        this.getUserResDecorator = cachingProxyOptions.getUserResDecorator || defaultGetUserResDecorator;
-
-        this.responseDirResolver = responseDirResolver || defaultResponseDirResolver;
-        this.responseFileResolver = responseFileResolver || defaultResponseFileResolver;
-
-        this.onListen = cachingProxyOptions.onListen || defaultOnListen;
+        this.onListen = cachingProxyOptions.onListen || defaults.cachingProxy.onListen;
 
         this.appOptions = {};
+
+        this.app = app;
+        this.cachePath = cachePath;
 
         this.initialize();
     }
@@ -69,15 +42,15 @@ class CachingProxy {
     configureExpressApp() {
         Object.assign(this.appOptions, this.expressHttpProxyOptions);
         Object.assign(this.appOptions, {
-            userResDecorator: this.getUserResDecorator(this.cachePath)
+            userResDecorator: this.getUserResDecorator(this)
         });
 
         this.app.use(this.proxyRoute, proxy(`${this.proxyHost}:${this.proxyHostPort}`, this.appOptions));
     }
 
-    cache (responseDirResolver, responseFileResolver, cachePath, data, req, bodyContent) {
-        const responseDir = responseDirResolver(cachePath, req, bodyContent, CachingProxy.dirNameBuilder);
-        const responseFilename = responseFileResolver(responseDir);
+    cache (data, req, bodyContent) {
+        const responseDir = this.responseDirResolver(this.cachePath, req, bodyContent, CachingProxy.dirNameBuilder);
+        const responseFilename = this.responseFileResolver(responseDir);
         const responsePath = path.join(responseDir, responseFilename);
     
         loggingService.logCaching(req, responseFilename, responsePath);

@@ -27,8 +27,8 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Example",
-            "program": "${workspaceFolder}/example.js",
+            "name": "Example Masquerader",
+            "program": "${workspaceFolder}/example/example.js",
             "outputCapture": "std",
             "args": ["masquerader"]
         }

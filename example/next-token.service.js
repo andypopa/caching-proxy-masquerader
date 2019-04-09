@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const CRC32 = require('crc-32');
 
-const paramsService = require('./params.service');
+const paramsService = require('../services/params.service');
 
 const getNextTokenRegistryPath = (cachePath) => {
     return path.join(cachePath, 'next-token-registry.json');

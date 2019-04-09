@@ -1,5 +1,9 @@
-const CachingProxyMasquerader = require('./index');
+const CachingProxyMasquerader = require('../index');
+const _ = require('lodash');
+const paramsService = require('../services/params.service');
+const nextTokenService = require('./next-token.service');
 const port = 9666;
+const path = require('path');
 
 const { isCachingProxy, isMasquerader } = CachingProxyMasquerader.getModesFromArgs();
 
@@ -55,16 +59,17 @@ const cachingProxyMasquerader = new CachingProxyMasquerader({
     port: port,
     isCachingProxy: isCachingProxy,
     isMasquerader: isMasquerader,
-    responseDirResolver: responseDirResolver,
+    cachePath: path.join(process.cwd(), 'data', '1553036024676'),
     cachingProxyOptions: {
         proxyHost: 'mws.amazonservices.com',
         proxyHostPort: 80,
         proxyRoute: '/',
+        responseDirResolver: responseDirResolver,
         expressHttpProxyOptions: {
             https: true
         }
     },
     masqueraderOptions: {
-
+        responseDirResolver: responseDirResolver
     }
 });

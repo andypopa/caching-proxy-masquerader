@@ -1,75 +1,34 @@
 const fs = require('fs');
 const path = require('path');
-const _ = require('lodash');
 
 const bodyParser = require('body-parser');
-const cacheService = require('./services/cache.service');
-const loggerService = require('./logger.service');
+const loggingService = require('./services/logging.service');
 
-const defaultOnListen = (port) => {
-    // eslint-disable-next-line no-console
-    console.log(`Caching proxy listening on port ${port}`);
-}
-
-const defaultGetStatus = (cache) => {
-    if (cache.indexOf('<Code>RequestThrottled</Code>') !== -1) return 503;
-    if (cache.indexOf('<Code>QuotaExceeded</Code>') !== -1) return 503;
-    return 200;
-}
-
-const defaultGetMasqueraderRequestHandler = (masquerader) => (req, res) => {
-    let paramsEncoded = [];
-    _.forOwn(req.body, (v, k) => {
-        paramsEncoded.push(`${k}=${v}`);
-    });
-    let bodyContent = paramsEncoded.join('&');
-    const cache = cacheService.getCachedResponse(masquerader.cachePath, req, bodyContent, false);
-    res.status(masquerader.getStatus(cache)).send(cache);
-}
-
-const defaultMasqueraderResponseFileLogger = (masquerader, responseDir) => {
-    const savedResponsesNo = fs.readdirSync(responseDir)
-        .filter((a) => a[0] !== '.')
-        .length;
-
-    return `${masquerader.masqueradingDataSource[responseDir] + '/' + savedResponsesNo}`
-}
-
-let defaultMasqueraderResponseFileResolver = (masquerader, responseDir) => {
-    const savedResponsesNo = fs.readdirSync(responseDir)
-        .filter((a) => a[0] !== '.')
-        .length;
-
-    if (typeof masquerader.masqueradingDataSource[responseDir] === 'undefined') {
-        masquerader.masqueradingDataSource[responseDir] = 1;
-    } else {
-        masquerader.masqueradingDataSource[responseDir] = masquerader.masqueradingDataSource[responseDir] < savedResponsesNo ?
-            masquerader.masqueradingDataSource[responseDir] + 1 :
-            1;
-    }
-    const responseFilename = masquerader.masqueradingDataSource[responseDir].toString();
-    return responseFilename;
-}
+const defaults = require('./defaults');
 
 class Masquerader {
-    constructor(masqueraderOptions) {
-        this.getMasqueraderRequestHandler = masqueraderOptions.getMasqueraderRequestHandler || defaultGetMasqueraderRequestHandler;
-        this.getStatus = masqueraderOptions.getStatus || defaultGetStatus;
+    constructor(masqueraderOptions, app, cachePath) {
+        this.getRequestHandler = masqueraderOptions.getRequestHandler || defaults.masquerader.getRequestHandler;
+        this.getStatus = masqueraderOptions.getStatus || defaults.masquerader.getStatus;
 
-        this.onListen = masqueraderOptions.onListen || defaultOnListen;
+        this.onListen = masqueraderOptions.onListen || defaults.masquerader.onListen;
         
-        this.masqueraderResponseFileLogger = masqueraderOptions.masqueraderResponseFileLogger || defaultMasqueraderResponseFileLogger;
-        this.masqueraderResponseFileResolver = masqueraderOptions.masqueraderResponseFileResolver || defaultMasqueraderResponseFileResolver;
+        this.responseDirResolver = masqueraderOptions.responseDirResolver || defaults.masquerader.responseDirResolver;
+        this.responseLogInfo = masqueraderOptions.responseLogInfo || defaults.masquerader.responseLogInfo;
+        this.responseFileResolver = masqueraderOptions.responseFileResolver || defaults.masquerader.responseFileResolver;
+
+        this.app = app;
+        this.cachePath = cachePath;
 
         this.initialize();
     }
 
-    getCachedResponse(responseDirResolver, cachePath, req, bodyContent) {
-        const responseDir = responseDirResolver(cachePath, req, bodyContent, Masquerader.dirNameBuilder);
-        const responseFilename = this.masqueraderResponseFileResolver(this, responseDir);
+    getCachedResponse(req, bodyContent) {
+        const responseDir = this.responseDirResolver(this.cachePath, req, bodyContent, Masquerader.dirNameBuilder);
+        const responseFilename = this.responseFileResolver(this, responseDir);
         const responsePath = path.join(responseDir, responseFilename);
 
-        loggerService.logMasquerading(this.masqueraderResponseFileLogger(this, responseDir));
+        loggingService.logMasquerading(req, responsePath, this.responseLogInfo(this, responseDir));
 
         return fs.readFileSync(responsePath, 'utf8');
     }
@@ -84,7 +43,7 @@ class Masquerader {
 
     configureExpressApp() {
         this.app.use(bodyParser.urlencoded({ extended: false }));
-        this.app.all('*', this.getMasqueraderRequestHandler(this));
+        this.app.all('*', this.getRequestHandler(this));
     }
 }
 

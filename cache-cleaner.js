@@ -1,17 +1,20 @@
+/* eslint-disable no-console */
 const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 const naturalSort = require('javascript-natural-sort');
 
-const cacheService = require('./services/cache.service');
+// const cacheService = require('./services/cache.service');
 
-const cachesFolderPath = path.join(cacheService.getCachesFolderPath());
+// const cachesFolderPath = path.join(cacheService.getCachesFolderPath());
+
+const cachesFolderPath = '/data';
 
 let directories = [];
 let directoriesWithResponses = [];
-let responses = [];
+// let responses = [];
 let throttledResponses = [];
-let throttledDirectories = [];
+// let throttledDirectories = [];
 
 const getDirsInDir = (dir) => {
     let filesAndDirs = fs.readdirSync(dir);
@@ -35,14 +38,14 @@ const getDirsWithResponses = (dirs) => {
     directoriesWithResponses = dirsWithResponses;
 }
 
-const getResponsesInDirs = (dirsWithResponses) => {
-    dirsWithResponses.forEach((dirWithResponses) => {
-        let files = fs.readdirSync(dirWithResponses)
-            .map((fileOrDir) => path.join(dirWithResponses, fileOrDir))
-            .filter((fileOrDir) => fs.lstatSync(fileOrDir).isFile())
-        responses = responses.concat(files);
-    })
-}
+// const getResponsesInDirs = (dirsWithResponses) => {
+//     dirsWithResponses.forEach((dirWithResponses) => {
+//         let files = fs.readdirSync(dirWithResponses)
+//             .map((fileOrDir) => path.join(dirWithResponses, fileOrDir))
+//             .filter((fileOrDir) => fs.lstatSync(fileOrDir).isFile())
+//         responses = responses.concat(files);
+//     })
+// }
 
 const getThrottledResponses = (dirsWithResponses) => {
     dirsWithResponses.forEach((dir) => {
@@ -118,6 +121,6 @@ const renameResponsesInDirs = (dirs) => {
 getDirsInDir(cachesFolderPath);
 getDirsWithResponses(directories);
 getThrottledResponses(directoriesWithResponses);
-throttledDirectories = _.uniq(throttledResponses.map(path.dirname));
+// throttledDirectories = _.uniq(throttledResponses.map(path.dirname));
 cleanThrottledResponses(throttledResponses);
 renameResponsesInDirs(directoriesWithResponses);
