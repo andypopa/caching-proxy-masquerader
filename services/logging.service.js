@@ -1,14 +1,22 @@
 /* eslint-disable no-console */
 const logCaching = (req, responseFilename, responsePath) => {
-        console.log()
-        console.log(`Caching ${req.method} ${req.url} (${responseFilename})`);
-        console.log(`Writing ${responsePath}`);
+        _logInternal();
+        log(`Caching ${req.method} ${req.url} (${responseFilename})`);
+        log(`Writing ${responsePath}`);
 }
 
 const logMasquerading = (req, responsePath, masqueradingLoggingInfo) => {
-        console.log()
-        console.log(`Masquerading ${req.method} ${req.url} ${'(' + masqueradingLoggingInfo + ')' || ''}`);
-        console.log(`Reading ${responsePath}`);
+        _logInternal();
+        log(`Masquerading ${req.method} ${req.url} ${'(' + masqueradingLoggingInfo + ')' || ''}`);
+        log(`Reading ${responsePath}`);
+}
+
+const log = (message) => {
+        _logInternal(`${(new Date()).toISOString()} ${message}`);
+}
+
+const _logInternal = (message) => {
+        console.log(message || '');
 }
 
 module.exports = {
