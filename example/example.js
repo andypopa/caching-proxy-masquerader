@@ -1,9 +1,12 @@
 const CachingProxyMasquerader = require('../index');
 const _ = require('lodash');
+
+const fs = require('fs');
+const path = require('path');
+
 const paramsService = require('../services/params.service');
 const nextTokenService = require('./next-token.service');
 const port = 9666;
-const path = require('path');
 
 const { isCachingProxy, isMasquerader } = CachingProxyMasquerader.getModesFromArgs();
 
@@ -48,6 +51,32 @@ const responseDirResolver = (cachePath, req, bodyContent, dirNameBuilder) => {
     return requestDir;
 }
 
+const masqueraderResponseFileResolver = (masquerader, responseDir) => {
+    if (responseDir.indexOf('ListMarketplaceParticipations') !== -1) {
+        // eslint-disable-next-line no-console
+        console.log('Resetting masquerading data source');
+        masquerader.masqueradingDataSource = {};
+    }
+
+    const savedResponsesNo = fs.readdirSync(responseDir)
+        .filter((a) => a[0] !== '.')
+        .length;
+
+    if (typeof masquerader.masqueradingDataSource === 'undefined') {
+        masquerader.masqueradingDataSource = {};
+    }
+
+    if (typeof masquerader.masqueradingDataSource[responseDir] === 'undefined') {
+        masquerader.masqueradingDataSource[responseDir] = 1;
+    } else {
+        masquerader.masqueradingDataSource[responseDir] = masquerader.masqueradingDataSource[responseDir] < savedResponsesNo ?
+            masquerader.masqueradingDataSource[responseDir] + 1 :
+            1;
+    }
+    const responseFilename = masquerader.masqueradingDataSource[responseDir].toString();
+    return responseFilename;
+}
+
 const encodeRequest = (relevantParams) => {
     return relevantParams
             .map((param) => `${param.name}=${param.value}`)
@@ -70,6 +99,7 @@ const cachingProxyMasquerader = new CachingProxyMasquerader({
         }
     },
     masqueraderOptions: {
-        responseDirResolver: responseDirResolver
+        responseDirResolver: responseDirResolver,
+        responseFileResolver: masqueraderResponseFileResolver
     }
 });
