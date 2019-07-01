@@ -6,6 +6,7 @@ const path = require('path');
 
 const paramsService = require('../services/params.service');
 const nextTokenService = require('./next-token.service');
+const loggingService = require('../services/logging.service');
 const port = 9666;
 
 const { isCachingProxy, isMasquerader } = CachingProxyMasquerader.getModesFromArgs();
@@ -22,7 +23,7 @@ const responseDirResolver = (cachePath, req, bodyContent, dirNameBuilder) => {
     const action = paramsObj.Action;
 
     const nextTokenParam = paramsService.getParam(params, 'NextToken');
-    
+
     if (typeof nextTokenParam !== 'undefined' && isCachingProxy) {
         const nextToken = nextTokenParam.value;
         let nextTokenRegistryObj = {};
@@ -54,33 +55,37 @@ const responseDirResolver = (cachePath, req, bodyContent, dirNameBuilder) => {
 const masqueraderResponseFileResolver = (masquerader, responseDir) => {
     if (responseDir.indexOf('ListMarketplaceParticipations') !== -1) {
         // eslint-disable-next-line no-console
-        console.log('Resetting masquerading data source');
+        loggingService.info('Resetting masquerading data source');
         masquerader.masqueradingDataSource = {};
     }
 
-    const savedResponsesNo = fs.readdirSync(responseDir)
-        .filter((a) => a[0] !== '.')
-        .length;
+    try {
+        const savedResponsesNo = fs.readdirSync(responseDir)
+            .filter((a) => a[0] !== '.')
+            .length;
 
-    if (typeof masquerader.masqueradingDataSource === 'undefined') {
-        masquerader.masqueradingDataSource = {};
-    }
+        if (typeof masquerader.masqueradingDataSource === 'undefined') {
+            masquerader.masqueradingDataSource = {};
+        }
 
-    if (typeof masquerader.masqueradingDataSource[responseDir] === 'undefined') {
-        masquerader.masqueradingDataSource[responseDir] = 1;
-    } else {
-        masquerader.masqueradingDataSource[responseDir] = masquerader.masqueradingDataSource[responseDir] < savedResponsesNo ?
-            masquerader.masqueradingDataSource[responseDir] + 1 :
-            1;
+        if (typeof masquerader.masqueradingDataSource[responseDir] === 'undefined') {
+            masquerader.masqueradingDataSource[responseDir] = 1;
+        } else {
+            masquerader.masqueradingDataSource[responseDir] = masquerader.masqueradingDataSource[responseDir] < savedResponsesNo ?
+                masquerader.masqueradingDataSource[responseDir] + 1 :
+                1;
+        }
+        const responseFilename = masquerader.masqueradingDataSource[responseDir].toString();
+        return responseFilename;
+    } catch (err) {
+        throw err;
     }
-    const responseFilename = masquerader.masqueradingDataSource[responseDir].toString();
-    return responseFilename;
 }
 
 const encodeRequest = (relevantParams) => {
     return relevantParams
-            .map((param) => `${param.name}=${param.value}`)
-            .join('&');
+        .map((param) => `${param.name}=${param.value}`)
+        .join('&');
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -91,7 +96,7 @@ const cachingProxyMasquerader = new CachingProxyMasquerader({
     cachePath: path.join(process.cwd(), 'data', '1553036024676'),
     cachingProxyOptions: {
         proxyHost: 'mws.amazonservices.com',
-        proxyHostPort: 80,
+        proxyHostPort: 443,
         proxyRoute: '/',
         responseDirResolver: responseDirResolver,
         expressHttpProxyOptions: {

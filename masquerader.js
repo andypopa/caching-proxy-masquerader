@@ -12,7 +12,7 @@ class Masquerader {
         this.getStatus = masqueraderOptions.getStatus || defaults.masquerader.getStatus;
 
         this.onListen = masqueraderOptions.onListen || defaults.masquerader.onListen;
-        
+
         this.responseDirResolver = masqueraderOptions.responseDirResolver || defaults.masquerader.responseDirResolver;
         this.responseLogInfo = masqueraderOptions.responseLogInfo || defaults.masquerader.responseLogInfo;
         this.responseFileResolver = masqueraderOptions.responseFileResolver || defaults.masquerader.responseFileResolver;
@@ -23,14 +23,30 @@ class Masquerader {
         this.initialize();
     }
 
+    getResponseDetails(req, bodyContent) {
+        try {
+            const responseDir = this.responseDirResolver(this.cachePath, req, bodyContent, Masquerader.dirNameBuilder);
+            const responseFilename = this.responseFileResolver(this, responseDir);
+            const responsePath = path.join(responseDir, responseFilename);
+
+            return {
+                responseDir: responseDir,
+                responseFilename: responseFilename,
+                responsePath: responsePath
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
     getCachedResponse(req, bodyContent) {
-        const responseDir = this.responseDirResolver(this.cachePath, req, bodyContent, Masquerader.dirNameBuilder);
-        const responseFilename = this.responseFileResolver(this, responseDir);
-        const responsePath = path.join(responseDir, responseFilename);
-
-        loggingService.logMasquerading(req, responsePath, this.responseLogInfo(this, responseDir));
-
-        return fs.readFileSync(responsePath, 'utf8');
+        try {
+            const { responseDir, responsePath } = this.getResponseDetails(req, bodyContent);
+            loggingService.logMasquerading(req, responsePath, this.responseLogInfo(this, responseDir));
+            return fs.readFileSync(responsePath, 'utf8');
+        } catch (err) {
+            throw err;
+        }
     }
 
     static dirNameBuilder(a, b) {

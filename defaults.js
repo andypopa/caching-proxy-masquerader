@@ -1,6 +1,7 @@
 const fs = require('fs');
 const _ = require('lodash');
 const paramsService = require('./services/params.service');
+const loggingService = require('./services/logging.service');
 const crypto = require('crypto');
 
 const getOnListen = (moduleType) => (port) => {
@@ -27,7 +28,7 @@ const defaults = {
         proxyHost: '127.0.0.1',
         proxyHostPort: 80,
         expressHttpProxyOptions: {
-            https: false
+            https: true
         },
 
         onListen: getOnListen('Caching proxy'),
@@ -64,8 +65,14 @@ const defaults = {
                 paramsEncoded.push(`${k}=${v}`);
             });
             let bodyContent = paramsEncoded.join('&');
-            const cache = masquerader.getCachedResponse(req, bodyContent);
-            res.status(masquerader.getStatus(cache)).send(cache);
+
+            try {
+                const cache = masquerader.getCachedResponse(req, bodyContent);
+                res.status(masquerader.getStatus(cache)).send(cache);
+            } catch (err) {
+                loggingService.logNotFound(req, `ResponsePathNotFound ${err.message} ${err.stack}`);
+                res.sendStatus(404);
+            }
         },
         
         responseLogInfo: (masquerader, responseDir) => {

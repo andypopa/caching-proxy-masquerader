@@ -1,14 +1,24 @@
 /* eslint-disable no-console */
+const chalk = require('chalk');
+
+const formatMethod = (method) => {
+        return method.length < 4 ? method + ' ' : method;
+}
+
 const logCaching = (req, responseFilename, responsePath) => {
-        _logInternal();
-        log(`Caching ${req.method} ${req.url} (${responseFilename})`);
-        log(`Writing ${responsePath}`);
+        log(`${chalk.green('CACH')} ${formatMethod(req.method)} ${req.url} ${responseFilename} -> ${responsePath}`);
 }
 
 const logMasquerading = (req, responsePath, masqueradingLoggingInfo) => {
-        _logInternal();
-        log(`Masquerading ${req.method} ${req.url} ${'(' + masqueradingLoggingInfo + ')' || ''}`);
-        log(`Reading ${responsePath}`);
+        log(`${chalk.blue('MASQ')} 200 ${formatMethod(req.method)} ${req.url} ${responsePath} ${'(' + masqueradingLoggingInfo + ')' || ''}`);
+}
+
+const logNotFound = (req, responsePath) => {
+        log(`${chalk.red('ERR ')} 404 ${formatMethod(req.method)} ${req.url} ${responsePath}`);
+}
+
+const info = (message) => {
+        log(`${chalk.green('INFO')} ${message}`);
 }
 
 const log = (message) => {
@@ -21,5 +31,8 @@ const _logInternal = (message) => {
 
 module.exports = {
         logCaching: logCaching,
-        logMasquerading: logMasquerading
+        logMasquerading: logMasquerading,
+        logNotFound: logNotFound,
+        log: log,
+        info: info
 }
