@@ -31,6 +31,14 @@
             "program": "${workspaceFolder}/example/example.js",
             "outputCapture": "std",
             "args": ["masquerader"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Example Caching Proxy",
+            "program": "${workspaceFolder}/example/example.js",
+            "outputCapture": "std",
+            "args": ["caching-proxy"]
         }
     ]
 }
