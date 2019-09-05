@@ -6,6 +6,9 @@ const loggingService = require('./services/logging.service');
 
 const defaults = require('./defaults');
 
+const express = require('express');
+const router = express.Router();
+
 class Masquerader {
     constructor(masqueraderOptions, app, cachePath) {
         this.getRequestHandler = masqueraderOptions.getRequestHandler || defaults.masquerader.getRequestHandler;
@@ -55,6 +58,20 @@ class Masquerader {
 
     initialize() {
         this.configureExpressApp();
+        this.startWebService();
+    }
+
+    startWebService() {
+        this.webService = express();
+        this.webService.get('/reset', (req, res) => {
+            loggingService.info('Resetting masquerading data source');
+            this.masqueradingDataSource = {};
+            res.status(200).send('OK');
+        });
+        this.webServicePort = 9667;
+        this.webService.listen(this.webServicePort, () => {
+            console.log(`Web service listening on ${this.webServicePort}`);
+        });
     }
 
     configureExpressApp() {

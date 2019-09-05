@@ -54,6 +54,8 @@ const defaults = {
         onListen: getOnListen('Masquerader'),
         
         getStatus: (cache) => {
+            if (cache.indexOf('<Code>NonRetriableInternalErrorException</Code>') !== -1) return 400;
+            if (cache.indexOf('<Code>RetriableInternalError</Code>') !== -1) return 500;
             if (cache.indexOf('<Code>RequestThrottled</Code>') !== -1) return 503;
             if (cache.indexOf('<Code>QuotaExceeded</Code>') !== -1) return 503;
             return 200;
