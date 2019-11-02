@@ -16,7 +16,7 @@
     "express": "^4.16.4",
     "express-http-proxy": "andypopa/express-http-proxy",
     "javascript-natural-sort": "^0.7.1",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.13",
     "moment": "^2.24.0"
   }
 }
