@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
 const proxy = require('express-http-proxy');
@@ -33,9 +33,7 @@ class CachingProxy {
 
     static dirNameBuilder(parentDirPath, subdirName) {
         const subdirPath = path.join(parentDirPath, subdirName);
-        if (!fs.existsSync(subdirPath)) {
-            fs.mkdirSync(subdirPath);
-        }
+        fs.ensureDirSync(subdirPath);
         return subdirPath;
     }
 
