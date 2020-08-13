@@ -70,6 +70,9 @@ const defaults = {
 
             try {
                 const cache = masquerader.getCachedResponse(req, bodyContent);
+                res.set('Access-Control-Allow-Origin', '*');
+                res.set('Access-Control-Allow-Headers', 'Authorization');
+                res.set('Allow', 'HEAD,GET,PUT,DELETE');
                 res.status(masquerader.getStatus(cache)).send(cache);
             } catch (err) {
                 loggingService.logNotFound(req, `ResponsePathNotFound ${err.message} ${err.stack}`);
