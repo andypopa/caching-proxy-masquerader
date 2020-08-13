@@ -1,7 +1,7 @@
 const CachingProxyMasquerader = require('../index');
 const _ = require('lodash');
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
 const paramsService = require('../services/params.service');
