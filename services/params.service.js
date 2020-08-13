@@ -16,7 +16,7 @@ const getParamsExpress = (expressReq) => {
 
 const getParams = (bodyContent, req) => {
     const query = {
-        'GET': req.url.split('?')[1],
+        'GET': req.url.includes('?') ? req.url.split('?')[1] : '',
         'POST': bodyContent
     }
     return getParamsFromQuery(query[req.method]);
