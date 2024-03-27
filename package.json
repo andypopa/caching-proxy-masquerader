@@ -13,7 +13,7 @@
     "body-parser": "^1.19.2",
     "chalk": "^2.4.2",
     "crc-32": "^1.2.1",
-    "express": "^4.17.3",
+    "express": "^4.19.2",
     "express-http-proxy": "github:andypopa/express-http-proxy",
     "fs-extra": "^9.1.0",
     "javascript-natural-sort": "^0.7.1",
